@@ -1,0 +1,22 @@
+import tensorflow as tf 
+from config import IMG_SIZE
+
+def build_model(num_classes):
+    base_model = tf.keras.applications.MobileNetV2(input_shape=IMG_SIZE + (3,),
+                                                   include_top = False,
+                                                   weights = 'imagenet')
+    base_model.trainable = False
+
+    model = tf.keras.Sequential([
+        tf.keras.layers.Rescaling(1./255),
+        base_model,
+        tf.keras.layers.GlobalAveragePooling2D(),
+        tf.keras.layers.Dense(128,activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(num_classes, activation='softmax')
+    ])
+
+    model.compile(optimizer = 'adam',
+                  loss = 'sparse_categorical_crossentropy',
+                  metrics = ['accuracy'])
+    return model
