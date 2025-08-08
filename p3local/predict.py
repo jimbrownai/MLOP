@@ -7,7 +7,7 @@ def predict_image(image_path, class_names):
 
     img = tf.keras.preprocessing.image.load_img(image_path,target_size=IMG_SIZE)
     img_array = tf.keras.preprocessing.image.img_to_array(img)
-    img_array = tf.expand_dims(img_array,axis=0)/255.0
+    img_array = tf.expand_dims(img_array,axis=0)
 
     predictions = model.predict(img_array)
     predicted_class = class_names[np.argmax(predictions)]
