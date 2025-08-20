@@ -1,0 +1,17 @@
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 32
+NUM_CLASSES = 50
+EPOCHS_HEAD = 10          # Train head only
+EPOCHS_FINE_TUNE = 20 
+VALIDATION_SPLIT = 0.2
+SEED = 123
+MODEL_SAVE_PATH = "saved_models/place_finder_model.h5"
+CHECKPOINT_PATH = "saved_models/best_model.keras"
+LOG_DIR = "logs"
+MOBNET_URL = "https://www.kaggle.com/models/google/mobilenet-v2/TensorFlow2/100-224-feature-vector/2"
+RESNET_URL = "https://tfhub.dev/google/imagenet/resnet_v2_50/feature_vector/5"
+BUCKET = "mlopsp3"
+PREFIX = "50_most_famous_places/"
+LOCAL_DIR = "train/"
+TEST_PREFIX ="test_images/"
+RESNET_SAVED_MODEL ="saved_models/famous_places_model/"
