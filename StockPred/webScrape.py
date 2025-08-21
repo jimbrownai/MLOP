@@ -1,71 +1,104 @@
 import requests
 from bs4 import BeautifulSoup
+import time
+import random
 
 
 def scrape_marketWatch(limit):
     # Feeds market watch is in XML Format | Using XML parser
     url = "https://feeds.marketwatch.com/marketwatch/topstories/"
     HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) ")}
-
     response = requests.get(url, headers=HEADERS)
     soup = BeautifulSoup(response.text, "xml")
+    headlines = []
 
-    headline = [] 
     for item in soup.find_all("item")[:10]:
-        headline.append(item.title.get_text())
-
-    return headline
+        headlines.append(item.title.get_text())
+    return headlines
 
 def scrape_benzinga(limit):
     url = "https://www.benzinga.com/news/"
     HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) ")}
     response = requests.get(url)
-    headline = []
-
+    headlines = []
     #DOM Structure <div class=content-feed-list><div class=newsfeed-card><div class=post-card-feed>
     soup = BeautifulSoup(response.text,'html.parser')
     articles = soup.find_all("div", class_="newsfeed-card")[:limit]
     for article in articles: 
         title = article.find("div", class_="post-card-feed")
-        headline.append(title)
-        # print(title.get_text())
-        # print("***************************************")
+        headlines.append(title.get_text())
+    return headlines
 
-# container__headline-text
+def scrape_edition_cnn(limit):
+    url = "https://edition.cnn.com/business"
+    HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) ")}
+    response = requests.get(url)
+    headlines = []
+    soup = BeautifulSoup(response.text,'html.parser')
+    articles = soup.find_all("div", class_="container__text container_lead-plus-headlines__text")[:limit]
+    for article in articles:
+        data = article.find("span", class_="container__headline-text")
+        headlines.append(data.get_text())
+    return headlines
 
-urls = [
+
+
+def fetch_page(url, retries=3):
+    HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/115.0 Safari/537.36"
+        )}
+    for attempt in range(3):
+        try:
+            response = requests.get(url, headers=HEADERS,timeout=10)
+            if response.status_code in [403,401]:
+                time.sleep(2**attempt + random.random())
+                continue
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            time.sleep(2** attempt+random.random())
+    return None
+
+def scrape_site(url,limit):
+    #common structure without ref any class names to scrape
+    response = fetch_page(url)
+    if not response:
+        return 
+    soup = BeautifulSoup(response,"html.parser")
+    titles = [t.get_text(strip=True) for t in soup.select("a")]
+    headlines = [] 
+    for idx, title in enumerate(titles, 1):
+        if len(title)>40: 
+            # print(f"{idx}. {title}")
+            headlines.append(title)
+    return headlines[:limit]
+
+def main():
+    urls = [
         # "https://finviz.com/news.ashx",
         # "https://finance.yahoo.com/markets/stocks/trending/",
         # "https://www.benzinga.com/news/",
-        "https://edition.cnn.com/business",
+        # "https://edition.cnn.com/business",
         # "https://www.investing.com/news/stock-market-news",
         # "https://www.cnbc.com/markets/",
         # "https://www.reuters.com/markets/"
         ]
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/115.0 Safari/537.36"
-    )
-}
-for url in urls :
-    response = requests.get(url)
-    if response.status_code == 200:
-        # print(response,url) newsfeed-card
-        soup = BeautifulSoup(response.text,'html.parser')
-        # articles = soup.find_all("div", class_="content-feed-list")
+    HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/115.0 Safari/537.36"
+        )}            
+    print(scrape_site("https://www.cnbc.com/",5))
+    print(scrape_marketWatch(5))
+    print(scrape_edition_cnn(5))
+    print(scrape_benzinga(5))
 
-        articles = soup.find_all("span", class_="container__headline-text")
-        # print(articles)
-        for article in articles: 
-            print(article.get_text())
-            print("***************************************")
-#         # news = [] 
-#         # for h3 in soup.select("article", class_="news-card")[:5]:
-#         #     title = h3.get_text()
-#         #     news.append(title)
-#         # print(news)
-#         # news = [] 
 
+
+if __name__ =='__main__':
+    main()
