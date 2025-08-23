@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
+import pandas as pd
 
 
 def scrape_marketWatch(limit):
@@ -76,29 +77,37 @@ def scrape_site(url,limit):
             headlines.append(title)
     return headlines[:limit]
 
+def get_headlines(limit):
+    res = scrape_site("https://www.cnbc.com/",limit) + scrape_marketWatch(limit) + scrape_edition_cnn(limit) + scrape_benzinga(limit)
+    return res
+
+def save_headlines_to_file(limit):
+    res = get_headlines(limit)
+    d = {'headlines':res}
+    df = pd.DataFrame(d)
+    # print(df.head(5))
+    df.to_csv("headlines.csv",index=False)
+
+def save_stock_tickers_info():
+    headers = {"User-Agent": "Mozilla/5.0"}
+    datalist = [] 
+    for i in range(1,5):
+        url = (
+            "https://stockanalysis.com/api/screener/s/f"
+            "?m=marketCap&s=desc&c=no,s,n,marketCap,price,change,revenue"
+            "&sc=marketCap&cn=500&f=exchange-is-NYSE"
+            f"&p={i}&i=stocks"
+        )
+        response = requests.get(url, headers=headers)
+        tree = response.json()
+        datalist = datalist+(tree['data']['data'])
+    df = pd.DataFrame(datalist)
+    df.columns = ["Rank", "Symbol", "Company", "MarketCap", "Price", "Change", "Revenue"]
+    df.to_csv('ticker_info.csv',index=False)
+
 def main():
-    urls = [
-        # "https://finviz.com/news.ashx",
-        # "https://finance.yahoo.com/markets/stocks/trending/",
-        # "https://www.benzinga.com/news/",
-        # "https://edition.cnn.com/business",
-        # "https://www.investing.com/news/stock-market-news",
-        # "https://www.cnbc.com/markets/",
-        # "https://www.reuters.com/markets/"
-        ]
-
-    HEADERS = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/115.0 Safari/537.36"
-        )}            
-    print(scrape_site("https://www.cnbc.com/",5))
-    print(scrape_marketWatch(5))
-    print(scrape_edition_cnn(5))
-    print(scrape_benzinga(5))
-
-
+    
+    save_stock_tickers_info()
 
 if __name__ =='__main__':
     main()
