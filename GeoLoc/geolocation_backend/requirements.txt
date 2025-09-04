@@ -1,0 +1,10 @@
+Django>=4.2
+djangorestframework
+boto3                 # AWS S3
+python-dotenv         # Load .env files
+tensorflow            # ML models
+pillow                # Image handling
+googlemaps            # Google Maps API
+serpapi               # Flight search
+celery
+redis
